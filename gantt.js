@@ -121,18 +121,25 @@ const SHOW_END_DATE = true;
   //  レコード編集サイドバー（iframe）
   // ==================================================
   function openRecordEditPopup(rid, appId, labelCodes, allRecords) {
-    const existing = document.getElementById('gantt-record-popup');
+    const existing = document.getElementById('gantt-record-popup-overlay');
     if (existing) existing.remove();
 
     const url = `${location.origin}/k/${kintone.app.getId()}/show#record=${rid}&mode=edit`;
 
+    const overlay = document.createElement('div');
+    overlay.id = 'gantt-record-popup-overlay';
+    overlay.style.cssText = `
+      position:fixed; inset:0; background:rgba(0,0,0,.5);
+      z-index:9989; display:flex; align-items:center; justify-content:center;
+    `;
+
     const popup = document.createElement('div');
     popup.id = 'gantt-record-popup';
     popup.style.cssText = `
-      position:fixed; top:0; right:0; width:55vw; height:100vh;
-      background:#fff; z-index:9990;
-      box-shadow:-4px 0 24px rgba(0,0,0,.25);
-      display:flex; flex-direction:column;
+      width:min(900px, 90vw); height:85vh;
+      background:#fff; border-radius:10px;
+      box-shadow:0 8px 40px rgba(0,0,0,.35);
+      display:flex; flex-direction:column; overflow:hidden;
     `;
 
     const header = document.createElement('div');
@@ -158,10 +165,13 @@ const SHOW_END_DATE = true;
 
     popup.appendChild(header);
     popup.appendChild(iframe);
-    document.body.appendChild(popup);
+    overlay.appendChild(popup);
+    document.body.appendChild(overlay);
+
+    overlay.addEventListener('click', (e) => { if (e.target === overlay) closePopup(); });
 
     const closePopup = async () => {
-      popup.remove();
+      overlay.remove();
       const fresh = await fetchAll(appId, [
         '$id', CONFIG.RECORD_TITLE_FIELD, CONFIG.SUBTABLE_CODE,
         ...labelCodes
